@@ -5,6 +5,7 @@
  */
  // pegtree pasm -g puppy3.tpeg parser.ts > puppy-parser.ts
 
+
 example Source '''
 from puppy import *
 def cat_clicked(cat): print('Meaw')
@@ -61,6 +62,14 @@ ImportDecl = {
     name: Name 
     ("as" alias: Name)?
     #ImportDecl
+} / ImportDeclJ
+
+ImportDeclJ = {
+    name: Name
+    "を"
+    (alias: Name "として")?
+    "インポート"
+    #ImportDecl
 }
 
 FromImportDecl = {
@@ -68,6 +77,14 @@ FromImportDecl = {
     name: Name 
     "import"
     names: ({ Name (',' _ Name)* } / {'*' _})
+    #FromDecl
+} / FromImportDeclJ
+
+FromImportDeclJ = {
+    name: Name
+    "から" 
+    names: ({ Name (',' _ Name)* } / {'*' _})
+    "をインポート"
     #FromDecl
 }
 
@@ -210,11 +227,26 @@ ElifStatement = {
     cond: Expression ":"
     then: (Block / Statement)
     #Elif
+} / ElifStatementJ
+
+ElifStatementJ = {
+    (@match(INDENT) / LF)
+    "もしくは" 
+    cond: Expression "ならば"
+    then: (Block / Statement)
+    #Elif
 }
 
 ElseStatement = {
     (@match(INDENT) / LF)
     "else" ":"
+    (Block / Statement)
+    #Else
+} / ElseStatementJ
+
+ElseStatementJ = {
+    (@match(INDENT) / LF)
+    "そうでなければ"
     (Block / Statement)
     #Else
 }
@@ -235,9 +267,28 @@ ForStatement = {
     body: (Block / Statement)
     (else: ElseStatement)?
     #For
+} / ForStatementJ
+
+ForStatementJ = {
+    "for" 
+    each: Name 
+    "in" 
+    list: Expression ":"
+    body: (Block / Statement)
+    (else: ElseStatement)?
+    #For
 }
 
 WhileStatement = {
+    "while"
+    cond: Expression ":"
+    body: (Block / Statement)
+    (else: ElseStatement)?
+    #While
+} / WhileStatementJ
+
+
+WhileStatementJ = {
     "while"
     cond: Expression ":"
     body: (Block / Statement)
@@ -635,3 +686,57 @@ example Source if a = b and b = c: pass
 
 example Expression (* 考える *)
 example Expression しきい値
+
+
+// 0517 日本語Puppy 比較用
+example Statement '''
+if A == 1 :
+    print(A)
+else:
+    print(A, B)
+'''
+
+example Statement '''
+もし A == 1 ならば
+    print(A)
+そうでなければ
+    print(A, B)
+'''
+
+example Statement '''
+if A :
+    A
+elif B :
+    B
+elif C :
+    C
+else :
+    D
+'''
+
+example Statement '''
+もし A ならば
+    A
+もしくは B ならば
+    B
+もしくは C ならば
+    C
+そうでなければ
+    D
+'''
+
+example ImportDecl '''
+import numpy as np
+'''
+
+example ImportDecl '''
+numpy を np として インポート
+'''
+
+example FromImportDecl'''
+from math import pi
+'''
+
+example FromImportDecl'''
+math から pi をインポート
+'''
