@@ -1,0 +1,77 @@
+/* Code Layout */
+
+EOF          = !.
+LF           = '\n' / EOF
+S            = [ \t\u200B\v\r　]
+
+_            = ( S / BLOCKCOMMENT / LINECOMMENT )*
+__           = ( S / '\n' / BLOCKCOMMENT / LINECOMMENT )*
+SPC          = ( S / BLOCKCOMMENT / LINECOMMENT )+
+
+BLOCKCOMMENT = '/*' ( !'*/' . )* '*/'
+LINECOMMENT  = [#＃] ( !LF . )*
+
+EOL          = _ LF (_ LF)*
+INDENT       = '\n' [ \t　]+
+
+
+Name = { [A-Za-z]+ #Name} _
+Int = { [0-9]+ #Int} _
+Expression = Int / Name
+
+example Expression 123
+example Expression Abc
+
+Statement = Assignment / AssignmentJ / AssignmentJ2 / ApplicationJ
+
+Assignment = {
+  Name
+  '=' _
+  Expression
+  #VarDecl
+}
+
+AssignmentJ = {
+  Name
+  'に'
+  Expression
+  'を代入する'
+  #VarDecl
+}
+
+AssignmentJ2 = {
+  Name
+  'を'
+  Expression
+  'とする'
+  #VarDecl
+}
+
+ApplicationJ = {
+  Expression
+  'を'
+  Verb
+  #App
+}
+
+VERB = (KATA+ / KANJI+) 'する'?
+Verb = { VERB #Verb }
+
+/* Character */
+
+HIRA = [ぁ-ん]
+KATA = [ァ-ヶ]
+KANJI = [㐀-䶵一-龠々〇〻ー]
+
+example Statement x = 1
+example Statement xに1を代入する
+example Statement xを1とする
+example Statement xを表示する
+example Statement xを表示
+
+
+// max min
+// sort
+// if
+// while
+// 四則演算
