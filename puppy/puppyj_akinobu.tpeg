@@ -5,12 +5,13 @@
  */
  // pegtree pasm -g puppy3.tpeg parser.ts > puppy-parser.ts
 
-
+/*
 example Source '''
 from puppy import *
 def cat_clicked(cat): print('Meaw')
 cat = Circle(500, 500, clicked=cat_clicked)
 '''
+*/
 
 /* Top Level */
 
@@ -57,6 +58,22 @@ Block = {
 
 /* import */
 
+example ImportDecl '''
+import numpy as np
+'''
+
+example ImportDecl '''
+numpy を np として インポート
+'''
+
+example FromImportDecl'''
+from math import pi
+'''
+
+example FromImportDecl'''
+math から pi をインポート
+'''
+
 ImportDecl = {
     "import" 
     name: Name 
@@ -90,8 +107,14 @@ FromImportDeclJ = {
 
 /* class 定義 */
 
-example ClassDecl,Statement '''
+example ClassDecl '''
 class Ball(Circle):
+    width = 80
+    heigh = 80
+'''
+
+example ClassDecl '''
+クラス Ball(Circle):
     width = 80
     heigh = 80
 '''
@@ -102,7 +125,17 @@ ClassDecl = {
     ("(" extends: Name ")")? ":"
     (Block / Statement)
     #ClassDecl
+} / ClassDeclJ
+
+ClassDeclJ = {
+    'クラス' S _ 
+    name: Name 
+    ("(" extends: Name ")")? ":"
+    (Block / Statement)
+    #ClassDeclJ
 }
+
+
 
 /* 関数定義 */
 
@@ -113,10 +146,27 @@ def succ(x: int):
     return x+1
 '''
 
+example Statement '''
+@クリック(A)
+定義 succ(x: int):
+    #hoge
+    return x+1
+'''
+
 FuncDecl = {
     (deco: Decorator)?
     (async: "async")?
     "def" 
+    name: Name 
+    params: FuncParams ":"
+    body: (Block / Statement)
+    #FuncDecl
+} / FuncDeclJ
+
+FuncDeclJ = {
+    (deco: Decorator)?
+    (async: "async")?
+    "定義" 
     name: Name 
     params: FuncParams ":"
     body: (Block / Statement)
@@ -142,12 +192,20 @@ FuncParam = {
     #Param
 }
 
-example Lambda lambda: print(1)
-example Lambda lambda x: print(x)
-example Lambda lambda x,y: print(x,y)
+example LambdaExpression lambda: print(1)
+example LambdaExpression lambda x: print(x)
+example LambdaExpression lambda x,y: print(x,y)
+example LambdaExpression ラムダ x,y: print(x,y)
 
 LambdaExpression = {
     "lambda" 
+    (params: LambdaParams)? ":"
+    body: (Block / Expression)
+    #FuncExpr
+} / LambdaExpressionJ
+
+LambdaExpressionJ = {
+    "ラムダ" 
     (params: LambdaParams)? ":"
     body: (Block / Expression)
     #FuncExpr
@@ -169,15 +227,39 @@ ReturnStatement = {
     "return"
     (expr: (Expressions / Expression) )?
     #Return
-} 
+} / ReturnStatementJ / ReturnStatementJ2
 
-YieldStatement = { "yield" #Yield } 
-PassStatement =  { "pass" #Pass }
-BreakStatement = { "break" #Break }
-ContinueStatement = { "continue" #Continue }
+ReturnStatementJ = {
+    "リターン"
+    (expr: (Expressions / Expression) )?
+    #Return
+}
+
+ReturnStatementJ2 = {
+    "返り値"
+    (expr: (Expressions / Expression) )?
+    #Return
+}
+
+YieldStatement = { "yield" #Yield } / YieldStatementJ
+YieldStatementJ = { "イールド" #Yield } 
+
+PassStatement =  { "pass" #Pass } / PassStatementJ / PassStatementJ2
+PassStatementJ =  { "パス" #Pass }
+PassStatementJ2 =  { "何もしない" #Pass }
+
+BreakStatement = { "break" #Break } / BreakStatementJ / BreakStatementJ2
+BreakStatementJ = { "ブレーク" #Break }
+BreakStatementJ2 = { "抜ける" #Break }
+
+
+ContinueStatement = { "continue" #Continue } / ContinueStatementJ / ContinueStatementJ2
+ContinueStatementJ = { "コンティニュー" #Continue }
+ContinueStatementJ2 = { "先頭に戻る" #Continue }
 
 /* if文 */
 
+/*
 example Statement '''
 if A == 1 :
     print(A)
@@ -186,6 +268,13 @@ else:
     print(A, B)
     
     A = 2
+'''
+
+example Statement '''
+もし A == 1 ならば
+    print(A)
+そうでなければ
+    print(A, B)
 '''
 
 example Statement '''
@@ -198,6 +287,18 @@ elif C :
 else :
     D
 '''
+
+example Statement '''
+もし A ならば
+    A
+もしくは B ならば
+    B
+もしくは C ならば
+    C
+そうでなければ
+    D
+'''
+*/
 
 IfStatement = {
     "if" 
@@ -279,6 +380,21 @@ ForStatementJ = {
     #For
 }
 
+// [TODO:]for の定義を考える
+
+
+example Statement'''
+while num < 2:
+    print("num = " + str(num))
+    num += 1
+'''
+
+example Statement'''
+num < 2 の間繰り返す
+    print("num = " + str(num))
+    num += 1
+'''
+
 WhileStatement = {
     "while"
     cond: Expression ":"
@@ -287,10 +403,9 @@ WhileStatement = {
     #While
 } / WhileStatementJ
 
-
 WhileStatementJ = {
-    "while"
-    cond: Expression ":"
+    cond: Expression
+    "の間繰り返す"
     body: (Block / Statement)
     (else: ElseStatement)?
     #While
@@ -325,8 +440,6 @@ Expressions = {
 }
 
 example Statement a = 1
-example Statement a[0] = 1
-example Statement A += 1
 
 VarDecl = {
     (anno: Decorator)?
@@ -339,12 +452,16 @@ VarDecl = {
 
 VarType = { 'const'/'let'/'var' } !W _
 
+example Statement a[0] = 1
+
 Assignment = {
     left: LeftHand
     ":"? "=" 
     right: Expression
     #Assignment
 }
+
+example Statement A += 1
 
 SelfAssignment = {
     left: LeftHand
@@ -666,6 +783,7 @@ TENIWOHA = [はがもをとにへまか]
 ":" = [:：] _
 "_" = [_＿]
 
+/*
 example Source '''
 World(1600, 900, background="white");
 ​
@@ -677,6 +795,7 @@ for x in range(100, 701, 100):
 Rectangle(100, 200, width=200, height=200)
 
 '''
+*/
 
 example Source '''
 a=1;b=1
@@ -686,57 +805,3 @@ example Source if a = b and b = c: pass
 
 example Expression (* 考える *)
 example Expression しきい値
-
-
-// 0517 日本語Puppy 比較用
-example Statement '''
-if A == 1 :
-    print(A)
-else:
-    print(A, B)
-'''
-
-example Statement '''
-もし A == 1 ならば
-    print(A)
-そうでなければ
-    print(A, B)
-'''
-
-example Statement '''
-if A :
-    A
-elif B :
-    B
-elif C :
-    C
-else :
-    D
-'''
-
-example Statement '''
-もし A ならば
-    A
-もしくは B ならば
-    B
-もしくは C ならば
-    C
-そうでなければ
-    D
-'''
-
-example ImportDecl '''
-import numpy as np
-'''
-
-example ImportDecl '''
-numpy を np として インポート
-'''
-
-example FromImportDecl'''
-from math import pi
-'''
-
-example FromImportDecl'''
-math から pi をインポート
-'''
