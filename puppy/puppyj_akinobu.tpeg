@@ -127,6 +127,7 @@ ClassDecl = {
     #ClassDecl
 } / ClassDeclJ
 
+// [TODO:]
 ClassDeclJ = {
     'クラス' S _ 
     name: Name 
@@ -134,7 +135,6 @@ ClassDeclJ = {
     (Block / Statement)
     #ClassDeclJ
 }
-
 
 
 /* 関数定義 */
@@ -149,7 +149,11 @@ def succ(x: int):
 example Statement '''
 @クリック(A)
 定義 succ(x: int):
-    #hoge
+    return x+1
+'''
+
+example Statement '''
+succ(x: int) を定義 
     return x+1
 '''
 
@@ -161,7 +165,7 @@ FuncDecl = {
     params: FuncParams ":"
     body: (Block / Statement)
     #FuncDecl
-} / FuncDeclJ
+} / FuncDeclJ / FuncDeclJ2
 
 FuncDeclJ = {
     (deco: Decorator)?
@@ -169,6 +173,16 @@ FuncDeclJ = {
     "定義" 
     name: Name 
     params: FuncParams ":"
+    body: (Block / Statement)
+    #FuncDecl
+}
+
+FuncDeclJ2 = {
+    (deco: Decorator)?
+    (async: "async")? 
+    name: Name 
+    params: FuncParams
+    "を定義"
     body: (Block / Statement)
     #FuncDecl
 }
@@ -204,6 +218,7 @@ LambdaExpression = {
     #FuncExpr
 } / LambdaExpressionJ
 
+// [TODO:]
 LambdaExpressionJ = {
     "ラムダ" 
     (params: LambdaParams)? ":"
@@ -227,7 +242,7 @@ ReturnStatement = {
     "return"
     (expr: (Expressions / Expression) )?
     #Return
-} / ReturnStatementJ / ReturnStatementJ2
+} / ReturnStatementJ / ReturnStatementJ2 / ReturnStatementJ3
 
 ReturnStatementJ = {
     "リターン"
@@ -241,21 +256,31 @@ ReturnStatementJ2 = {
     #Return
 }
 
+ReturnStatementJ3 = {
+    (expr: (Expressions / Expression) )?
+    "を返す"
+    #Return
+}
+
 YieldStatement = { "yield" #Yield } / YieldStatementJ
 YieldStatementJ = { "イールド" #Yield } 
 
-PassStatement =  { "pass" #Pass } / PassStatementJ / PassStatementJ2
-PassStatementJ =  { "パス" #Pass }
-PassStatementJ2 =  { "何もしない" #Pass }
+PassStatement =  { "pass" #Pass } / PassStatementJ
+PassStatementJ =  { "パス" / "何もしない" #Pass }
 
-BreakStatement = { "break" #Break } / BreakStatementJ / BreakStatementJ2
-BreakStatementJ = { "ブレーク" #Break }
-BreakStatementJ2 = { "抜ける" #Break }
+BreakStatement = { "break" #Break } / BreakStatementJ
+BreakStatementJ = { "ブレーク" / "抜ける" #Break }
 
+ContinueStatement = { "continue" #Continue } / ContinueStatementJ
+ContinueStatementJ = { "コンティニュー" / "先頭に戻る" #Continue }
 
-ContinueStatement = { "continue" #Continue } / ContinueStatementJ / ContinueStatementJ2
-ContinueStatementJ = { "コンティニュー" #Continue }
-ContinueStatementJ2 = { "先頭に戻る" #Continue }
+example Statement '''
+もし A == 1 ならば
+    何もしない
+そうでなければ
+    cnt += 1
+    抜ける
+'''
 
 /* if文 */
 
@@ -370,6 +395,7 @@ ForStatement = {
     #For
 } / ForStatementJ
 
+// [TODO:]
 ForStatementJ = {
     "for" 
     each: Name 
@@ -379,9 +405,6 @@ ForStatementJ = {
     (else: ElseStatement)?
     #For
 }
-
-// [TODO:]for の定義を考える
-
 
 example Statement'''
 while num < 2:
@@ -426,6 +449,14 @@ MultiAssignment = {
     "=" 
     right: (Expressions / Expression)
     #MultiAssignment
+} / MultiAssignmentJ
+
+// [TODO:???]
+MultiAssignmentJ = {
+    left: { LeftHand ("," LeftHand)+ }
+    "=" 
+    right: (Expressions / Expression)
+    #MultiAssignment
 }
 
 LeftHand =
@@ -440,6 +471,8 @@ Expressions = {
 }
 
 example Statement a = 1
+example Statement a に 1 を代入する
+example Statement a を 1 とする
 
 VarDecl = {
     (anno: Decorator)?
@@ -448,6 +481,26 @@ VarDecl = {
     "=" 
     right: Expression
     #VarDecl
+} / VarDeclJ / VarDeclJ2
+
+VarDeclJ = {
+    (anno: Decorator)?
+    (type: VarType)?
+    left: Name
+    "に" 
+    right: Expression
+    "を代入する"
+    #VarDecl
+}
+
+VarDeclJ2 = {
+    (anno: Decorator)?
+    (type: VarType)?
+    left: Name
+    "を" 
+    right: Expression
+    "とする"
+    #VarDecl
 }
 
 VarType = { 'const'/'let'/'var' } !W _
@@ -455,6 +508,14 @@ VarType = { 'const'/'let'/'var' } !W _
 example Statement a[0] = 1
 
 Assignment = {
+    left: LeftHand
+    ":"? "=" 
+    right: Expression
+    #Assignment
+} / AssignmentJ
+
+// [TODO:]
+AssignmentJ = {
     left: LeftHand
     ":"? "=" 
     right: Expression
@@ -474,7 +535,10 @@ SelfAssignOp = {
     ('<<' / '>>' / '**' / '//' / [+=*/%&|^＋＝＊／％＆｜＾×÷]) ('='/'＝')
 } _
 
+// [TODO: たぶんここは日本語で設計しなおさないとダメ]
+
 /* Expression */
+// [TODO: Expression も設計から、否定先読みが不明]
 
 example Expression not 1 == 2
 example Expression not 1 == 2 and 1 > 3
@@ -797,6 +861,7 @@ Rectangle(100, 200, width=200, height=200)
 '''
 */
 
+/*
 example Source '''
 a=1;b=1
 '''
@@ -805,3 +870,4 @@ example Source if a = b and b = c: pass
 
 example Expression (* 考える *)
 example Expression しきい値
+*/
