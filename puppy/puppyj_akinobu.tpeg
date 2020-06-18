@@ -443,19 +443,29 @@ AssignmentStatement =
     / SelfAssignment
 
 example Statement a,b = b,a
+example Statement a,b に b,a を代入する
+example Statement a,b を b,a とする
 
 MultiAssignment = {
     left: { LeftHand ("," LeftHand)+ }
     "=" 
     right: (Expressions / Expression)
     #MultiAssignment
-} / MultiAssignmentJ
+} / MultiAssignmentJ / MultiAssignmentJ2
 
-// [TODO:???]
 MultiAssignmentJ = {
     left: { LeftHand ("," LeftHand)+ }
-    "=" 
+    "に" 
     right: (Expressions / Expression)
+    "を代入する"
+    #MultiAssignment
+}
+
+MultiAssignmentJ2 = {
+    left: { LeftHand ("," LeftHand)+ }
+    "を" 
+    right: (Expressions / Expression)
+    "とする"
     #MultiAssignment
 }
 
@@ -535,10 +545,9 @@ SelfAssignOp = {
     ('<<' / '>>' / '**' / '//' / [+=*/%&|^＋＝＊／％＆｜＾×÷]) ('='/'＝')
 } _
 
-// [TODO: たぶんここは日本語で設計しなおさないとダメ]
+// [TODO: ここからは設計が必要?]
 
 /* Expression */
-// [TODO: Expression も設計から、否定先読みが不明]
 
 example Expression not 1 == 2
 example Expression not 1 == 2 and 1 > 3
