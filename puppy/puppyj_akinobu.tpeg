@@ -545,8 +545,8 @@ SelfAssignOp = {
     ('<<' / '>>' / '**' / '//' / [+=*/%&|^＋＝＊／％＆｜＾×÷]) ('='/'＝')
 } _
 
-// [TODO: ここからは設計が必要?]
 
+// [TODO:]
 /* Expression */
 
 example Expression not 1 == 2
